@@ -436,10 +436,10 @@ public class OpenCV {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		    	System.loadLibrary("opencv_java245");
+		    	System.loadLibrary("opencv_java451");
 	    	}
 	    	else{
-	    		 System.err.println("Cannot load local version of opencv_java245  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		 System.err.println("Cannot load local version of opencv_java451  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    	}
 	    	
 	    	nativeLoaded = true;
