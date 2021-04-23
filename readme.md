@@ -20,7 +20,7 @@ _NB: When running on the Mac, make sure you have Processing set to 64-bit mode i
 
 See [here](https://github.com/atduskgreg/opencv-processing/releases) for the latest release.
 
-Download openCV 4.5.1 for java(opencv-451.jar, opencv_java451.dll for windows or opencv_java451.dylib for macos) and copy to code folder.
+Download openCV 4.5.1 and copy opencv files((opencv-451.jar, opencv_java451.dll for windows or opencv_java451.dylib for macos) to code folder.
 
 ### Examples
 
