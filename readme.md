@@ -1,4 +1,4 @@
-## OpenCV for Processing
+## OpenCV for Processing(update to opencv 4.5.1)
 
 **A Processing library for the [OpenCV](http://opencv.org/) computer vision library.**
 
@@ -19,6 +19,8 @@ OpenCV for Processing currently supports Mac OSX, 32-bit and 64-bit Windows, 32-
 _NB: When running on the Mac, make sure you have Processing set to 64-bit mode in the Preferences_
 
 See [here](https://github.com/atduskgreg/opencv-processing/releases) for the latest release.
+
+Download openCV 4.5.1 for java(opencv-451.jar, opencv_java451.dll for windows or opencv_java451.dylib for macos) and copy to code folder.
 
 ### Examples
 
