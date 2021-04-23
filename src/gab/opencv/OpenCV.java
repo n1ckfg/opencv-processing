@@ -608,6 +608,57 @@ public class OpenCV {
 		return OpenCV.toProcessing(detections.toArray());
 	}
 	
+
+	/**
+	* Load a network model(tensorflow)
+	* 
+	*  @return
+	*      Net object.
+	*/
+	public void loadDNN() {
+		net = Dnn.readNetFromTensorflow(dataPath("opencv_face_detector_uint8.pb"), dataPath("opencv_face_detector.pbtxt"));
+	}	
+
+	/**
+	* Detect objects using the dnn classifier. loadDNN() must already
+	* have been called to setup the classifier.
+	* 
+	* @return
+	*     An array of java.awt.Rectnangle objects with the location, width, and height of each detected object.
+	*/
+	// https://www.programcreek.com/java-api-examples/?api=org.opencv.dnn.Dnn 
+	public Rectangle[] detect(PImage img) {
+		int W = 640, H = 480;
+		Mat m = new Mat(new Size(img.width, img.height), CvType.CV_8UC4, Scalar.all(0));
+		toCv(img, m);
+		ARGBtoBGRA(m, m);
+		Imgproc.cvtColor(m, m, Imgproc.COLOR_BGRA2BGR);
+		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(240,240), new Scalar(104.0, 177.0, 123.0), false, false, CvType.CV_32F);
+		net.setInput(blob);
+		Mat output = net.forward();
+		output = output.reshape(1, (int) output.total()/7);
+
+		ArrayList<Rectangle> rect = new ArrayList();
+
+		for (int i = 0; i < output.rows(); i++) {
+			double confidence = output.get(i, 2)[0];
+			if (confidence > 0.5) {
+				int left = (int) (output.get(i, 3)[0] * W);
+				int top = (int) (output.get(i, 4)[0] * H);
+				int right = (int) (output.get(i, 5)[0] * W);
+				int bottom = (int) (output.get(i, 6)[0] * H);
+				fill(255);
+				textSize(24);
+				text((float)confidence, left, top-2);
+				rect.add(new Rectangle(left, top, right-left, bottom-top));
+			}
+		}
+		blob.release();
+		output.release();
+		Rectangle[] r = rect.toArray(new Rectangle[rect.size()]);
+		return r;
+	}	
+	
 	/**
 	 * Setup background subtraction. After calling this function,
 	 * updateBackground() must be called with each new frame
@@ -620,8 +671,8 @@ public class OpenCV {
 	 * @param nMixtures
 	 * @param backgroundRatio
 	 */
-	public void startBackgroundSubtraction(int history, int nMixtures, double backgroundRatio){
-		backgroundSubtractor = new BackgroundSubtractorMOG(history, nMixtures, backgroundRatio);
+	public void startBackgroundSubtraction(int history, double nMixtures, boolean backgroundRatio) {
+		backgroundSubtractor = Video.createBackgroundSubtractorMOG2(history, nMixtures, backgroundRatio);
 	}
 	
 	/**
