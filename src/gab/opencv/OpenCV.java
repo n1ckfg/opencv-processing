@@ -647,9 +647,9 @@ public class OpenCV {
 				int top = (int) (output.get(i, 4)[0] * H);
 				int right = (int) (output.get(i, 5)[0] * W);
 				int bottom = (int) (output.get(i, 6)[0] * H);
-				fill(255);
-				textSize(24);
-				text((float)confidence, left, top-2);
+// 				fill(255);
+// 				textSize(24);
+// 				text((float)confidence, left, top-2);
 				rect.add(new Rectangle(left, top, right-left, bottom-top));
 			}
 		}
