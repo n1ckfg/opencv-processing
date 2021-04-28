@@ -62,9 +62,12 @@ import org.opencv.core.Point;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvException;
 import org.opencv.core.Core.MinMaxLocResult;
-import org.opencv.video.BackgroundSubtractorMOG;
+import org.opencv.video.Video;
+//import org.opencv.video.BackgroundSubtractor;
+import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.dnn.*;
 
 import processing.core.*;
 
@@ -113,10 +116,11 @@ public class OpenCV {
 	private boolean isArm = false;
 	
 	public CascadeClassifier classifier;
-	BackgroundSubtractorMOG backgroundSubtractor;
+	BackgroundSubtractorMOG2 backgroundSubtractor;
 	public Flow flow;
-
-	public final static String VERSION = "##library.prettyVersion##";
+	public Net net;
+	
+	public final static String VERSION = "0.61";
 	public final static String CASCADE_FRONTALFACE = "haarcascade_frontalface_alt.xml";
 	public final static String CASCADE_PEDESTRIANS = "hogcascade_pedestrians.xml";
 	public final static String CASCADE_EYE = "haarcascade_eye.xml";
@@ -425,7 +429,7 @@ public class OpenCV {
 	    		}
 	    	} catch (NullPointerException e) {
 	    		// platform couldn't be determined
-	    		System.err.println("Cannot load local version of opencv_java245  : Linux 32/64, arm7, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, arm7, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    		e.printStackTrace();
 	    	}
 	    	
@@ -436,10 +440,10 @@ public class OpenCV {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		    	System.loadLibrary("opencv_java451");
+		    	System.loadLibrary("opencv_java440");
 	    	}
 	    	else{
-	    		 System.err.println("Cannot load local version of opencv_java451  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		 System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    	}
 	    	
 	    	nativeLoaded = true;
@@ -550,15 +554,14 @@ public class OpenCV {
 		}
 	}
 	
+
 	/**
 	 * Convert an array of OpenCV Rect objects into
 	 * an array of java.awt.Rectangle rectangles.
 	 * Especially useful when working with
 	 * classifier.detectMultiScale().
 	 *
-	 * @param Rect[] rects
-	 * 
-	 * @return 
+	 * @return
 	 *  A Rectangle[] of java.awt.Rectangle
 	 */
 	public static Rectangle[] toProcessing(Rect[] rects){
@@ -608,7 +611,6 @@ public class OpenCV {
 		return OpenCV.toProcessing(detections.toArray());
 	}
 	
-
 	/**
 	* Load a network model(tensorflow)
 	* 
@@ -616,8 +618,12 @@ public class OpenCV {
 	*      Net object.
 	*/
 	public void loadDNN() {
-		net = Dnn.readNetFromTensorflow(dataPath("opencv_face_detector_uint8.pb"), dataPath("opencv_face_detector.pbtxt"));
-	}	
+		String dataPath = getLibPath();
+		net = Dnn.readNetFromTensorflow(dataPath + "data/opencv_face_detector_uint8.pb",  dataPath + "data/opencv_face_detector.pbtxt");
+		if (!net.empty()) {
+			System.out.println("DNN face detector loaded.");
+		}
+	}
 
 	/**
 	* Detect objects using the dnn classifier. loadDNN() must already
@@ -633,12 +639,12 @@ public class OpenCV {
 		toCv(img, m);
 		ARGBtoBGRA(m, m);
 		Imgproc.cvtColor(m, m, Imgproc.COLOR_BGRA2BGR);
-		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(240,240), new Scalar(104.0, 177.0, 123.0), false, false, CvType.CV_32F);
+		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(300,300), new Scalar(104.0, 177.0, 123.0), false, false, CvType.CV_32F);
 		net.setInput(blob);
 		Mat output = net.forward();
 		output = output.reshape(1, (int) output.total()/7);
 
-		ArrayList<Rectangle> rect = new ArrayList();
+		ArrayList<Rectangle> rect = new ArrayList<>();
 
 		for (int i = 0; i < output.rows(); i++) {
 			double confidence = output.get(i, 2)[0];
@@ -658,7 +664,7 @@ public class OpenCV {
 		Rectangle[] r = rect.toArray(new Rectangle[rect.size()]);
 		return r;
 	}	
-	
+
 	/**
 	 * Setup background subtraction. After calling this function,
 	 * updateBackground() must be called with each new frame
@@ -668,11 +674,13 @@ public class OpenCV {
 	 * http://docs.opencv.org/java/org/opencv/video/BackgroundSubtractorMOG.html#BackgroundSubtractorMOG(int, int, double)
 	 * 
 	 * @param history
-	 * @param nMixtures
-	 * @param backgroundRatio
+	 * @param threshold
+	 * @param detectShadow
 	 */
-	public void startBackgroundSubtraction(int history, double nMixtures, boolean backgroundRatio) {
-		backgroundSubtractor = Video.createBackgroundSubtractorMOG2(history, nMixtures, backgroundRatio);
+	public void startBackgroundSubtraction(int history, double threshold, boolean detectShadow){
+		backgroundSubtractor = Video.createBackgroundSubtractorMOG2();
+//				new BackgroundSubtractorMOG2(history, nMixtures, backgroundRatio);
+		
 	}
 	
 	/**
@@ -1135,8 +1143,6 @@ public class OpenCV {
 	 * 		By default this will normalize the histogram (scale the values to 0.0-1.0). Pass false as the third argument to keep values unormalized.
 	 * @param numBins 
 	 * 		The number of bins into which divide the histogram should be divided.
-	 * @param normalize (optional)
-	 * 		Whether or not to normalize the histogram (scale the values to 0.0-1.0). Defaults to true.
 	 * @return
 	 * 		A Histogram object that you can call draw() on.
 	 */
@@ -1473,8 +1479,8 @@ public class OpenCV {
 		return matROI;
 	}
 
-	private void welcome() {
-		System.out.println("##library.name## ##library.prettyVersion## by ##author##");
+	public void welcome() {
+		System.out.println("OpenCV for Processing 0.61");
 		System.out.println("Using Java OpenCV " + Core.VERSION);
 	}
 	
@@ -1487,4 +1493,3 @@ public class OpenCV {
 		return VERSION;
 	}
 }
-
