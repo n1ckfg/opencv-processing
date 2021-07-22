@@ -377,9 +377,9 @@ public class OpenCV {
           int n0 = path.indexOf('/');
 
           int n1 = -1;
-            
 
-          n1 = path.indexOf("opencv_processing.jar");
+			n1 = path.indexOf("/opencv_processing/library");
+//          n1 = path.indexOf("opencv_processing.jar");
           if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
             // In Windows, path string starts with "jar file/C:/..."
             // so the substring up to the first / is removed.
@@ -401,14 +401,14 @@ public class OpenCV {
     		int bitsJVM = PApplet.parseInt(System.getProperty("sun.arch.data.model"));
     		
     		String osArch = System.getProperty("os.arch");
-    		
+    		String libName = "opencv_processing/library";
 	    	String nativeLibPath = getLibPath();
-	    	
+	    	System.out.println(nativeLibPath);
 	    	String path = null;
 
 	    	// determine the path to the platform-specific opencv libs
 	    	if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
-	    		path = nativeLibPath + "windows" + bitsJVM;
+	    		path = nativeLibPath + "/" + libName + "/windows" + bitsJVM;
 	    	}
 	    	if (PApplet.platform == PConstants.MACOSX) { //platform Mac
 	    		path = nativeLibPath + "macosx" + bitsJVM;
@@ -420,7 +420,8 @@ public class OpenCV {
 			// in the future we'll have runtime-detection of armv7 systems, and use the optimized library on those
     			path = isArm ? nativeLibPath + "linux-armv6hf" : nativeLibPath + "linux" + bitsJVM;
 	    	}
-	    	
+
+	    	System.out.println(path);
 	    	// ensure the determined path exists
 	    	try {
 	    		File libDir = new File(path);
@@ -440,7 +441,8 @@ public class OpenCV {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		    	System.loadLibrary("opencv_java440");
+//		    	System.loadLibrary("opencv_java440");
+				System.load(path + "/opencv_java440.dll");
 	    	}
 	    	else{
 	    		 System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
@@ -467,12 +469,12 @@ public class OpenCV {
         	}
         }
         
-    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
-     
-        //set sys_paths to null
-        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-        sysPathsField.setAccessible(true);
-        sysPathsField.set(null, null);
+//    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
+//
+//        //set sys_paths to null
+//        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+//        sysPathsField.setAccessible(true);
+//        sysPathsField.set(null, null);
     }
 
 	/**
@@ -610,7 +612,12 @@ public class OpenCV {
 		
 		return OpenCV.toProcessing(detections.toArray());
 	}
-	
+
+	public void setCuda() {
+		net.setPreferableBackend(Dnn.DNN_BACKEND_CUDA);
+		net.setPreferableTarget(Dnn.DNN_TARGET_CUDA);
+	}
+
 	/**
 	* Load a network model(tensorflow)
 	* 
@@ -618,10 +625,44 @@ public class OpenCV {
 	*      Net object.
 	*/
 	public void loadDNN() {
-		String dataPath = getLibPath();
+		String dataPath = getLibPath() + "/opencv_processing/library/";
 		net = Dnn.readNetFromTensorflow(dataPath + "data/opencv_face_detector_uint8.pb",  dataPath + "data/opencv_face_detector.pbtxt");
 		if (!net.empty()) {
 			System.out.println("DNN face detector loaded.");
+		}
+	}
+
+	public void loadYOLO() {
+		String dataPath = getLibPath() + "/opencv_processing/library/";
+		net = Dnn.readNetFromDarknet(dataPath + "data/yolov3.cfg",  dataPath + "data/yolov3.weights");
+		if (!net.empty()) {
+			System.out.println("Yolo loaded.");
+		}
+	}
+
+	public void detectYOLO(PImage img) {
+		int W = 640, H = 480;
+		Mat m = new Mat(new Size(img.width, img.height), CvType.CV_8UC4, Scalar.all(0));
+		toCv(img, m);
+		ARGBtoBGRA(m, m);
+		Imgproc.cvtColor(m, m, Imgproc.COLOR_BGRA2BGR);
+		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(416,416), new Scalar(0,0,0), false, false, CvType.CV_32F);
+		net.setInput(blob);
+		Mat output = net.forward();
+
+		for (int i = 0; i<output.rows();i++) {
+			Mat scores = output.row(i).colRange(5, output.cols());
+			MinMaxLocResult mm = Core.minMaxLoc(scores);
+			Point classIdPoint = mm.maxLoc;
+			double confidence = mm.maxVal;
+			if (confidence > 0.65) {
+				int idx = (int)classIdPoint.x;
+				int x = (int)(output.get(i,0)[0]*W);
+				int y = (int)(output.get(i, 1)[0]*H);
+				int w = (int)(output.get(i, 2)[0]*W);
+				int h = (int)(output.get(i, 3)[0]*H);
+
+			}
 		}
 	}
 
