@@ -14,9 +14,9 @@ Contributions welcome.
 
 ### Installing
 
-OpenCV for Processing currently supports Mac OSX, 64-bit Windows(tested), 64-bit Linux(not tested).
-
-_NB: When running on the Mac, make sure you have Processing set to 64-bit mode in the Preferences_
+OpenCV for Processing(opencv 4.4.0) currently supports Windows 10 64-bit(tested).
+OpenCV for Processing(opencv 4.0.0) currently supports macOS 64-bit(tested).
+Some features(DNN, Yolo) need CUDA installed.
 
 See [here](https://github.com/atduskgreg/opencv-processing/releases) for the latest release.
 
