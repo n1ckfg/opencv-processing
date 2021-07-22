@@ -14,13 +14,13 @@ Contributions welcome.
 
 ### Installing
 
-OpenCV for Processing(opencv 4.4.0) currently supports Windows 10 64-bit(tested).
+OpenCV for Processing(opencv 4.4.0) supports Windows 10 64-bit(tested).
 
-OpenCV for Processing(opencv 4.0.0) currently supports macOS 64-bit(tested).
+OpenCV for Processing(opencv 4.0.0) supports macOS(tested), Windows 10 64-bit(tested).
 
-Some features(DNN, Yolo) need CUDA installed.
+Some features(DNN, Yolo) need CUDA.
 
-See [here](https://github.com/atduskgreg/opencv-processing/releases) for the latest release.
+
 
 
 ### Examples
