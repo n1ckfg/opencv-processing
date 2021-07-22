@@ -20,7 +20,6 @@ _NB: When running on the Mac, make sure you have Processing set to 64-bit mode i
 
 See [here](https://github.com/atduskgreg/opencv-processing/releases) for the latest release.
 
-Download openCV 4.4.0 and copy opencv files((opencv-440.jar, opencv_java440.dll for windows or opencv_java440.dylib for macos) to code folder.
 
 ### Examples
 
