@@ -1,4 +1,4 @@
-## OpenCV for Processing(update to opencv 4.4.0)
+## OpenCV for Processing(update to opencv 4.4.0 / Processing 4)
 
 **A Processing library for the [OpenCV](http://opencv.org/) computer vision library.**
 
