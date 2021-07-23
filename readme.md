@@ -15,9 +15,7 @@ Contributions welcome.
 
 OpenCV for Processing(opencv 4.0.0) supports macOS big sur(tested), Windows 10 64-bit(tested).
 
-![macos-big-sur-alert-unverified-developer](https://user-images.githubusercontent.com/907115/126735567-5d1a401e-571b-4cbd-a8cc-ae3af1764a5f.png)
-
-https://support.apple.com/en-us/HT202491
+On macOS, check this link first! https://support.apple.com/en-us/HT202491
 
 OpenCV for Processing(opencv 4.4.0) supports Windows 10 64-bit(tested with nvidia gtx1070, Some features(DNN, Yolo) need CUDA).
 
