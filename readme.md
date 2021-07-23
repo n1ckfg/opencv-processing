@@ -12,13 +12,10 @@ OpenCV for Processing is based on the officially supported [OpenCV Java API](htt
 
 Contributions welcome.
 
-### Installing
-
-OpenCV for Processing(opencv 4.4.0) supports Windows 10 64-bit(tested).
 
 OpenCV for Processing(opencv 4.0.0) supports macOS big sur(tested), Windows 10 64-bit(tested).
 
-Some features(DNN, Yolo) need CUDA(Windows only).
+OpenCV for Processing(opencv 4.4.0) supports Windows 10 64-bit(tested with nvidia gtx1070, Some features(DNN, Yolo) need CUDA).
 
 
 
