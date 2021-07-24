@@ -44,6 +44,7 @@ import java.nio.IntBuffer;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -120,7 +121,7 @@ public class OpenCV {
 	public Flow flow;
 	public Net net;
 	
-	public final static String VERSION = "0.61";
+	public final static String VERSION = "0.6";
 	public final static String CASCADE_FRONTALFACE = "haarcascade_frontalface_alt.xml";
 	public final static String CASCADE_PEDESTRIANS = "hogcascade_pedestrians.xml";
 	public final static String CASCADE_EYE = "haarcascade_eye.xml";
@@ -377,16 +378,12 @@ public class OpenCV {
           int n0 = path.indexOf('/');
 
           int n1 = -1;
-
-			n1 = path.indexOf("/opencv_processing/library");
-//          n1 = path.indexOf("opencv_processing.jar");
+          n1 = path.indexOf("opencv_processing.jar");
           if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
             // In Windows, path string starts with "jar file/C:/..."
             // so the substring up to the first / is removed.
             n0++;
           }
-
-
           if ((-1 < n0) && (-1 < n1)) {
             return path.substring(n0, n1);
           } else {
@@ -397,18 +394,18 @@ public class OpenCV {
       }
     
     private void initNative(){
+//		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     	if(!nativeLoaded){
     		int bitsJVM = PApplet.parseInt(System.getProperty("sun.arch.data.model"));
-    		
+
     		String osArch = System.getProperty("os.arch");
     		String libName = "opencv_processing/library";
 	    	String nativeLibPath = getLibPath();
-	    	System.out.println(nativeLibPath);
 	    	String path = null;
 
 	    	// determine the path to the platform-specific opencv libs
 	    	if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
-	    		path = nativeLibPath + "/" + libName + "/windows" + bitsJVM;
+	    		path = nativeLibPath + "windows" + bitsJVM;
 	    	}
 	    	if (PApplet.platform == PConstants.MACOSX) { //platform Mac
 	    		path = nativeLibPath + "macosx" + bitsJVM;
@@ -421,60 +418,42 @@ public class OpenCV {
     			path = isArm ? nativeLibPath + "linux-armv6hf" : nativeLibPath + "linux" + bitsJVM;
 	    	}
 
-	    	System.out.println(path);
 	    	// ensure the determined path exists
 	    	try {
 	    		File libDir = new File(path);
 	    		if (libDir.exists()) {
-	    			nativeLibPath = path; 
+	    			nativeLibPath = path;
 	    		}
 	    	} catch (NullPointerException e) {
 	    		// platform couldn't be determined
-	    		System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, arm7, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		System.err.println("Cannot load local version of opencv_java440  : Windows 64 bits or macOS 64 bits are only available");
 	    		e.printStackTrace();
 	    	}
-	    	
+
 	    	// this check might be redundant now...
-	    	if((PApplet.platform == PConstants.MACOSX && bitsJVM == 64) || (PApplet.platform == PConstants.WINDOWS) || (PApplet.platform == PConstants.LINUX)){
-		    	try {
-					addLibraryPath(nativeLibPath);
-				} catch (Exception e) {
-					e.printStackTrace();
+			if(PApplet.platform == PConstants.WINDOWS){
+
+				System.out.println(nativeLibPath);
+				try {
+					System.loadLibrary("opencv_java440");
+//					System.load(nativeLibPath + "/opencv_java440.dll");
+				} catch (UnsatisfiedLinkError e) {
+					System.out.println("Can't load opencv_processing library");
 				}
-//		    	System.loadLibrary("opencv_java440");
-				System.load(path + "/opencv_java440.dll");
-	    	}
+	    	} else if ((PApplet.platform == PConstants.MACOSX)) {
+				try {
+//					System.load(nativeLibPath + "/libopencv_java400.dylib");
+					System.loadLibrary("opencv_java400");
+				} catch (UnsatisfiedLinkError e) {
+					System.out.println("Can't load opencv_processing library");
+				}
+			}
 	    	else{
 	    		 System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    	}
-	    	
+
 	    	nativeLoaded = true;
     	}
-    }
-    
-
-    private void addLibraryPath(String path) throws Exception {
-//         String originalPath = System.getProperty("java.library.path");
-        
-        // If this is an arm device running linux, Processing seems to include the linux32 dirs in the path,
-        // which conflict with the arm-specific libs. To fix this, we remove the linux32 segments from the path.
-        //
-        // Alternatively, we could do one of the following:
-        // 		A) prepend to the path instead of append, forcing our libs to be used
-        // 		B) rename the libopencv_java245 in the arm7 dir and add logic to load it instead above in System.loadLibrary(...)
-        
-//         if (isArm) {
-//         	if (originalPath.indexOf("linux32") != -1) {
-//         		originalPath = originalPath.replaceAll(":[^:]*?linux32", "");
-//         	}
-//         }
-        
-//    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
-//
-//        //set sys_paths to null
-//        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-//        sysPathsField.setAccessible(true);
-//        sysPathsField.set(null, null);
     }
 
 	/**
@@ -625,7 +604,7 @@ public class OpenCV {
 	*      Net object.
 	*/
 	public void loadDNN() {
-		String dataPath = getLibPath() + "/opencv_processing/library/";
+		String dataPath = getLibPath();
 		net = Dnn.readNetFromTensorflow(dataPath + "data/opencv_face_detector_uint8.pb",  dataPath + "data/opencv_face_detector.pbtxt");
 		if (!net.empty()) {
 			System.out.println("DNN face detector loaded.");
@@ -633,7 +612,7 @@ public class OpenCV {
 	}
 
 	public void loadYOLO() {
-		String dataPath = getLibPath() + "/opencv_processing/library/";
+		String dataPath = getLibPath();
 		net = Dnn.readNetFromDarknet(dataPath + "data/yolov3.cfg",  dataPath + "data/yolov3.weights");
 		if (!net.empty()) {
 			System.out.println("Yolo loaded.");
@@ -1521,7 +1500,7 @@ public class OpenCV {
 	}
 
 	public void welcome() {
-		System.out.println("OpenCV for Processing 0.61");
+		System.out.println("OpenCV for Processing 0.6");
 		System.out.println("Using Java OpenCV " + Core.VERSION);
 	}
 	
