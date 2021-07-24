@@ -454,7 +454,7 @@ public class OpenCV {
     
 
     private void addLibraryPath(String path) throws Exception {
-        String originalPath = System.getProperty("java.library.path");
+//         String originalPath = System.getProperty("java.library.path");
         
         // If this is an arm device running linux, Processing seems to include the linux32 dirs in the path,
         // which conflict with the arm-specific libs. To fix this, we remove the linux32 segments from the path.
@@ -463,11 +463,11 @@ public class OpenCV {
         // 		A) prepend to the path instead of append, forcing our libs to be used
         // 		B) rename the libopencv_java245 in the arm7 dir and add logic to load it instead above in System.loadLibrary(...)
         
-        if (isArm) {
-        	if (originalPath.indexOf("linux32") != -1) {
-        		originalPath = originalPath.replaceAll(":[^:]*?linux32", "");
-        	}
-        }
+//         if (isArm) {
+//         	if (originalPath.indexOf("linux32") != -1) {
+//         		originalPath = originalPath.replaceAll(":[^:]*?linux32", "");
+//         	}
+//         }
         
 //    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
 //
