@@ -11,7 +11,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd $DIR
 
 mkdir build/opencv_processing
-javac -cp /Applications/Processing.app/Contents/Java/core.jar gab/opencv/*.java
+javac -cp /Applications/Processing.app/Contents/Java/core.jar:/Users/nick/Development/Processing/Processing4/libraries/opencv_processing/library/opencv-245.jar gab/opencv/*.java
 mv opencv_processing/*.class build/opencv_processing/
 cd build
 jar cvfm ../opencv_processing.jar manifest.txt opencv_processing/*.class
