@@ -7,7 +7,11 @@ OpenCV opencv;
 
 void setup() {
   size(640, 480, P2D);
-  cam = new Capture(this, 640, 480);
+  String[] cameras = Capture.list();
+  for (int i=0; i<cameras.length; i++) {
+    println(i + ". " + cameras[i]);
+  }
+  cam = new Capture(this, 640, 480, cameras[0]);
   opencv = new OpenCV(this, 640, 480);
   opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
 
