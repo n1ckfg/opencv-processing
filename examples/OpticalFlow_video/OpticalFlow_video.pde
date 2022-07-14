@@ -13,7 +13,10 @@ void setup() {
   //  video = new Movie(this, "sample1.mov");
   //  video = new Capture(this, 640, 480);
   opencv = new OpenCV(this, 320, 240);
-  video = new Capture(this, 320, 240);
+  String[] cameras = Capture.list();
+  int cameraIndex = 1;
+  println(cameras[cameraIndex]);
+  video = new Capture(this, 320, 240, cameras[cameraIndex]);
   video.start();
   //  video.loop();
   //  video.play();

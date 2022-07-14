@@ -1,9 +1,9 @@
 /**
- * OpenCV for Processing
- * Computer vision with OpenCV.
- * https://github.com/atduskgreg/opencv-processing
+ * ##library.name##
+ * ##library.sentence##
+ * ##library.url##
  *
- * Copyright (c) 2013 Greg Borenstein http://gregborenstein.com
+ * Copyright ##copyright## ##author##
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
  * 
- * @author      Greg Borenstein http://gregborenstein.com
- * @modified    05/21/2017
- * @version     0.5.4 (17)
+ * @author      ##author##
+ * @modified    ##date##
+ * @version     ##library.prettyVersion## (##library.version##)
  */
 
 
@@ -62,9 +62,12 @@ import org.opencv.core.Point;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvException;
 import org.opencv.core.Core.MinMaxLocResult;
-import org.opencv.video.BackgroundSubtractorMOG;
+import org.opencv.video.Video;
+//import org.opencv.video.BackgroundSubtractor;
+import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.dnn.*;
 
 import processing.core.*;
 
@@ -113,10 +116,11 @@ public class OpenCV {
 	private boolean isArm = false;
 	
 	public CascadeClassifier classifier;
-	BackgroundSubtractorMOG backgroundSubtractor;
+	BackgroundSubtractorMOG2 backgroundSubtractor;
 	public Flow flow;
-
-	public final static String VERSION = "0.5.4";
+	public Net net;
+	
+	public final static String VERSION = "0.61";
 	public final static String CASCADE_FRONTALFACE = "haarcascade_frontalface_alt.xml";
 	public final static String CASCADE_PEDESTRIANS = "hogcascade_pedestrians.xml";
 	public final static String CASCADE_EYE = "haarcascade_eye.xml";
@@ -373,9 +377,9 @@ public class OpenCV {
           int n0 = path.indexOf('/');
 
           int n1 = -1;
-            
 
-          n1 = path.indexOf("opencv_processing.jar");
+			n1 = path.indexOf("/opencv_processing/library");
+//          n1 = path.indexOf("opencv_processing.jar");
           if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
             // In Windows, path string starts with "jar file/C:/..."
             // so the substring up to the first / is removed.
@@ -397,14 +401,14 @@ public class OpenCV {
     		int bitsJVM = PApplet.parseInt(System.getProperty("sun.arch.data.model"));
     		
     		String osArch = System.getProperty("os.arch");
-    		
+    		String libName = "opencv_processing/library";
 	    	String nativeLibPath = getLibPath();
-	    	
+	    	System.out.println(nativeLibPath);
 	    	String path = null;
 
 	    	// determine the path to the platform-specific opencv libs
 	    	if (PApplet.platform == PConstants.WINDOWS) { //platform Windows
-	    		path = nativeLibPath + "windows" + bitsJVM;
+	    		path = nativeLibPath + "/" + libName + "/windows" + bitsJVM;
 	    	}
 	    	if (PApplet.platform == PConstants.MACOSX) { //platform Mac
 	    		path = nativeLibPath + "macosx" + bitsJVM;
@@ -416,7 +420,8 @@ public class OpenCV {
 			// in the future we'll have runtime-detection of armv7 systems, and use the optimized library on those
     			path = isArm ? nativeLibPath + "linux-armv6hf" : nativeLibPath + "linux" + bitsJVM;
 	    	}
-	    	
+
+	    	System.out.println(path);
 	    	// ensure the determined path exists
 	    	try {
 	    		File libDir = new File(path);
@@ -425,7 +430,7 @@ public class OpenCV {
 	    		}
 	    	} catch (NullPointerException e) {
 	    		// platform couldn't be determined
-	    		System.err.println("Cannot load local version of opencv_java245  : Linux 32/64, arm7, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, arm7, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    		e.printStackTrace();
 	    	}
 	    	
@@ -436,10 +441,11 @@ public class OpenCV {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		    	System.loadLibrary("opencv_java245");
+//		    	System.loadLibrary("opencv_java440");
+				System.load(path + "/opencv_java440.dll");
 	    	}
 	    	else{
-	    		 System.err.println("Cannot load local version of opencv_java245  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
+	    		 System.err.println("Cannot load local version of opencv_java440  : Linux 32/64, Windows 32 bits or Mac Os 64 bits are only avaible");
 	    	}
 	    	
 	    	nativeLoaded = true;
@@ -463,12 +469,12 @@ public class OpenCV {
         	}
         }
         
-    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
-     
-        //set sys_paths to null
-        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-        sysPathsField.setAccessible(true);
-        sysPathsField.set(null, null);
+//    	System.setProperty("java.library.path", originalPath +System.getProperty("path.separator")+ path);
+//
+//        //set sys_paths to null
+//        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+//        sysPathsField.setAccessible(true);
+//        sysPathsField.set(null, null);
     }
 
 	/**
@@ -550,15 +556,14 @@ public class OpenCV {
 		}
 	}
 	
+
 	/**
 	 * Convert an array of OpenCV Rect objects into
 	 * an array of java.awt.Rectangle rectangles.
 	 * Especially useful when working with
 	 * classifier.detectMultiScale().
 	 *
-	 * @param Rect[] rects
-	 * 
-	 * @return 
+	 * @return
 	 *  A Rectangle[] of java.awt.Rectangle
 	 */
 	public static Rectangle[] toProcessing(Rect[] rects){
@@ -607,7 +612,100 @@ public class OpenCV {
 		
 		return OpenCV.toProcessing(detections.toArray());
 	}
-	
+
+	public void setCuda() {
+		net.setPreferableBackend(Dnn.DNN_BACKEND_CUDA);
+		net.setPreferableTarget(Dnn.DNN_TARGET_CUDA);
+	}
+
+	/**
+	* Load a network model(tensorflow)
+	* 
+	*  @return
+	*      Net object.
+	*/
+	public void loadDNN() {
+		String dataPath = getLibPath() + "/opencv_processing/library/";
+		net = Dnn.readNetFromTensorflow(dataPath + "data/opencv_face_detector_uint8.pb",  dataPath + "data/opencv_face_detector.pbtxt");
+		if (!net.empty()) {
+			System.out.println("DNN face detector loaded.");
+		}
+	}
+
+	public void loadYOLO() {
+		String dataPath = getLibPath() + "/opencv_processing/library/";
+		net = Dnn.readNetFromDarknet(dataPath + "data/yolov3.cfg",  dataPath + "data/yolov3.weights");
+		if (!net.empty()) {
+			System.out.println("Yolo loaded.");
+		}
+	}
+
+	public void detectYOLO(PImage img) {
+		int W = 640, H = 480;
+		Mat m = new Mat(new Size(img.width, img.height), CvType.CV_8UC4, Scalar.all(0));
+		toCv(img, m);
+		ARGBtoBGRA(m, m);
+		Imgproc.cvtColor(m, m, Imgproc.COLOR_BGRA2BGR);
+		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(416,416), new Scalar(0,0,0), false, false, CvType.CV_32F);
+		net.setInput(blob);
+		Mat output = net.forward();
+
+		for (int i = 0; i<output.rows();i++) {
+			Mat scores = output.row(i).colRange(5, output.cols());
+			MinMaxLocResult mm = Core.minMaxLoc(scores);
+			Point classIdPoint = mm.maxLoc;
+			double confidence = mm.maxVal;
+			if (confidence > 0.65) {
+				int idx = (int)classIdPoint.x;
+				int x = (int)(output.get(i,0)[0]*W);
+				int y = (int)(output.get(i, 1)[0]*H);
+				int w = (int)(output.get(i, 2)[0]*W);
+				int h = (int)(output.get(i, 3)[0]*H);
+
+			}
+		}
+	}
+
+	/**
+	* Detect objects using the dnn classifier. loadDNN() must already
+	* have been called to setup the classifier.
+	* 
+	* @return
+	*     An array of java.awt.Rectnangle objects with the location, width, and height of each detected object.
+	*/
+	// https://www.programcreek.com/java-api-examples/?api=org.opencv.dnn.Dnn 
+	public Rectangle[] detect(PImage img) {
+		int W = 640, H = 480;
+		Mat m = new Mat(new Size(img.width, img.height), CvType.CV_8UC4, Scalar.all(0));
+		toCv(img, m);
+		ARGBtoBGRA(m, m);
+		Imgproc.cvtColor(m, m, Imgproc.COLOR_BGRA2BGR);
+		Mat blob = Dnn.blobFromImage(m, 1.0, new Size(300,300), new Scalar(104.0, 177.0, 123.0), false, false, CvType.CV_32F);
+		net.setInput(blob);
+		Mat output = net.forward();
+		output = output.reshape(1, (int) output.total()/7);
+
+		ArrayList<Rectangle> rect = new ArrayList<>();
+
+		for (int i = 0; i < output.rows(); i++) {
+			double confidence = output.get(i, 2)[0];
+			if (confidence > 0.5) {
+				int left = (int) (output.get(i, 3)[0] * W);
+				int top = (int) (output.get(i, 4)[0] * H);
+				int right = (int) (output.get(i, 5)[0] * W);
+				int bottom = (int) (output.get(i, 6)[0] * H);
+// 				fill(255);
+// 				textSize(24);
+// 				text((float)confidence, left, top-2);
+				rect.add(new Rectangle(left, top, right-left, bottom-top));
+			}
+		}
+		blob.release();
+		output.release();
+		Rectangle[] r = rect.toArray(new Rectangle[rect.size()]);
+		return r;
+	}	
+
 	/**
 	 * Setup background subtraction. After calling this function,
 	 * updateBackground() must be called with each new frame
@@ -617,11 +715,13 @@ public class OpenCV {
 	 * http://docs.opencv.org/java/org/opencv/video/BackgroundSubtractorMOG.html#BackgroundSubtractorMOG(int, int, double)
 	 * 
 	 * @param history
-	 * @param nMixtures
-	 * @param backgroundRatio
+	 * @param threshold
+	 * @param detectShadow
 	 */
-	public void startBackgroundSubtraction(int history, int nMixtures, double backgroundRatio){
-		backgroundSubtractor = new BackgroundSubtractorMOG(history, nMixtures, backgroundRatio);
+	public void startBackgroundSubtraction(int history, double threshold, boolean detectShadow){
+		backgroundSubtractor = Video.createBackgroundSubtractorMOG2();
+//				new BackgroundSubtractorMOG2(history, nMixtures, backgroundRatio);
+		
 	}
 	
 	/**
@@ -1084,8 +1184,6 @@ public class OpenCV {
 	 * 		By default this will normalize the histogram (scale the values to 0.0-1.0). Pass false as the third argument to keep values unormalized.
 	 * @param numBins 
 	 * 		The number of bins into which divide the histogram should be divided.
-	 * @param normalize (optional)
-	 * 		Whether or not to normalize the histogram (scale the values to 0.0-1.0). Defaults to true.
 	 * @return
 	 * 		A Histogram object that you can call draw() on.
 	 */
@@ -1422,8 +1520,8 @@ public class OpenCV {
 		return matROI;
 	}
 
-	private void welcome() {
-		System.out.println("OpenCV for Processing 0.5.4 by Greg Borenstein http://gregborenstein.com");
+	public void welcome() {
+		System.out.println("OpenCV for Processing 0.61");
 		System.out.println("Using Java OpenCV " + Core.VERSION);
 	}
 	
@@ -1436,4 +1534,3 @@ public class OpenCV {
 		return VERSION;
 	}
 }
-
